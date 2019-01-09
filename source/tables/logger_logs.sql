@@ -75,6 +75,9 @@ create table logger_logs(
   l_new_col.data_type := 'VARCHAR2(64)'; -- taken from v$session.client_info
   l_new_cols(l_new_cols.count+1) := l_new_col;
 
+  l_new_col.column_name := 'TID';
+  l_new_col.data_type := 'VARCHAR2(146)';
+  l_new_cols(l_new_cols.count+1) := l_new_col;
 
   for i in 1 .. l_new_cols.count loop
     select count(1)

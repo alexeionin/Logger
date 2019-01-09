@@ -2742,7 +2742,6 @@ as
     $end
   end append_param;
 
-
   /**
    * Handles inserts into LOGGER_LOGS.
    *
@@ -2767,29 +2766,26 @@ as
    * @param p_line_no
    * @param p_extra
    * @param po_id ID entered into logger_logs for this record
+   * @pi_transaction local transaction ID
    */
-  procedure ins_logger_logs(
-    p_logger_level in logger_logs.logger_level%type,
-    p_text in varchar2 default null, -- Not using type since want to be able to pass in 32767 characters
-    p_scope in logger_logs.scope%type default null,
-    p_call_stack in logger_logs.call_stack%type default null,
-    p_unit_name in logger_logs.unit_name%type default null,
-    p_line_no in logger_logs.line_no%type default null,
-    p_extra in logger_logs.extra%type default null,
-    po_id out nocopy logger_logs.id%type
+  procedure ins_logger_logs_wrp(
+    p_logger_level  in          logger_logs.logger_level%type,
+    p_text          in          varchar2 default null, -- Not using type since want to be able to pass in 32767 characters
+    p_scope         in          logger_logs.scope%type default null,
+    p_call_stack    in          logger_logs.call_stack%type default null,
+    p_unit_name     in          logger_logs.unit_name%type default null,
+    p_line_no       in          logger_logs.line_no%type default null,
+    p_extra         in          logger_logs.extra%type default null,
+    po_id           out nocopy  logger_logs.id%type,
+    pi_transaction  IN          VARCHAR2
     )
   as
     pragma autonomous_transaction;
-
     l_id logger_logs.id%type;
     l_text varchar2(32767) := p_text;
     l_extra logger_logs.extra%type := p_extra;
     l_tmp_clob clob;
-
-  begin
-    $if $$no_op $then
-      null;
-    $else
+  BEGIN
       -- Using select into to support version older than 11gR1 (see Issue 26)
       select logger_logs_seq.nextval
       into po_id
@@ -2824,7 +2820,8 @@ as
         scn,
         extra,
         sid,
-        client_info
+        client_info,
+        TID
         )
        values(
          po_id, p_logger_level, l_text,
@@ -2836,14 +2833,40 @@ as
          null,
          l_extra,
          to_number(sys_context('userenv','sid')),
-         sys_context('userenv','client_info')
+         sys_context('userenv','client_info'),
+         pi_transaction
          );
+      commit;
+  END ins_logger_logs_wrp;
 
+  procedure ins_logger_logs(
+    p_logger_level in logger_logs.logger_level%type,
+    p_text in varchar2 default null, -- Not using type since want to be able to pass in 32767 characters
+    p_scope in logger_logs.scope%type default null,
+    p_call_stack in logger_logs.call_stack%type default null,
+    p_unit_name in logger_logs.unit_name%type default null,
+    p_line_no in logger_logs.line_no%type default null,
+    p_extra in logger_logs.extra%type default null,
+    po_id out nocopy logger_logs.id%type
+    )
+  as
+  begin
+    $if $$no_op $then
+      null;
+    $else
+      ins_logger_logs_wrp(
+          p_logger_level => p_logger_level,
+          p_text => p_text,
+          p_scope => p_scope,
+          p_call_stack => p_call_stack,
+          p_unit_name => p_unit_name,
+          p_line_no => p_line_no,
+          p_extra => p_extra,
+          po_id => po_id,
+          pi_transaction => dbms_transaction.local_transaction_id
+      );    
     $end -- $$NO_OP
-
-    commit;
   end ins_logger_logs;
-
 
   /**
    * Does string replacement similar to C's sprintf
@@ -2951,6 +2974,11 @@ as
       return g_plug_logger_log_error;
     end if;
   end get_plugin_rec;
+
+  FUNCTION get_last_id RETURN NUMBER
+  IS BEGIN
+    RETURN g_log_id; 
+  END get_last_id;
 
 end logger;
 /

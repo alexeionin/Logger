@@ -381,5 +381,7 @@ as
   function get_plugin_rec(
     p_logger_level in logger_logs.logger_level%type)
     return logger.rec_logger_log;
+  
+  FUNCTION get_last_id RETURN NUMBER;
 end logger;
 /
