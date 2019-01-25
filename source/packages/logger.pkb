@@ -2836,7 +2836,12 @@ as
          sys_context('userenv','client_info'),
          pi_transaction
          );
+    IF p_logger_level <= logger.g_warning THEN --   g_off g_permanent g_error g_warning 
       commit;
+    ELSE
+      -- 	g_information g_debug g_timing g_sys_context g_apex       
+      commit work write nowait batch;
+    END IF;
   END ins_logger_logs_wrp;
 
   procedure ins_logger_logs(
