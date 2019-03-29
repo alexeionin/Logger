@@ -21,5 +21,5 @@ create or replace force view v_logger_logs as
       sid,
       client_info,
       tid
-    from logger_logs l 
+    from logger_logs l
 /
