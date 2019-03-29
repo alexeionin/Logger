@@ -1,5 +1,5 @@
-create or replace force view logger_logs_5_min as
-	select 
+create or replace force view v_logger_logs as
+	select
       id,
       logger_level,
       text,
@@ -21,6 +21,5 @@ create or replace force view logger_logs_5_min as
       sid,
       client_info,
       tid
-    from logger_logs l
-    where time_stamp > systimestamp - (5/1440)
+    from logger_logs l 
 /
