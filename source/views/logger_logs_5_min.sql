@@ -4,6 +4,10 @@ create or replace force view logger_logs_5_min as
       logger_level,
       text,
       time_stamp,
+      l.time_stamp - LAG(l.time_stamp) 
+        OVER (PARTITION BY l.sid, l.module, l.action 
+          ORDER BY l.time_stamp desc, l.id DESC
+        ) AS duration,  
       scope,
       module,
       action,
@@ -17,6 +21,6 @@ create or replace force view logger_logs_5_min as
       sid,
       client_info,
       tid
-    from logger_logs 
+    from logger_logs l
     where time_stamp > systimestamp - (5/1440)
 /

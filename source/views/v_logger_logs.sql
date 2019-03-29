@@ -1,4 +1,4 @@
-create or replace force view logger_logs_60_min as
+create or replace force view v_logger_logs as
 	select
       id,
       logger_level,
@@ -22,5 +22,4 @@ create or replace force view logger_logs_60_min as
       client_info,
       tid
     from logger_logs 
-	  where time_stamp > systimestamp - (1/24)
 /
